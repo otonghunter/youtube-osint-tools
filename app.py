@@ -130,7 +130,7 @@ if channel_name:
     q = channel_name.strip()
     q_encoded = q.replace(" ", "+")
     q_nospace = q.replace(" ", "").lower()
-    q_quoted = f'"{q}"'
+    q_quoted = f'%22{q_encoded}%22'
 
     def section(title):
         st.markdown(f'<p class="section-label">{title}</p>', unsafe_allow_html=True)
