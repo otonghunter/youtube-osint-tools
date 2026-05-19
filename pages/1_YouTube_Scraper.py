@@ -5,37 +5,138 @@ import re
 from datetime import datetime, timezone
 from googleapiclient.discovery import build
 
-st.set_page_config(page_title="YouTube Channel Scraper", page_icon="📊", layout="wide")
+st.set_page_config(page_title="YouTube Scraper", page_icon="📊", layout="wide")
 
-st.title("📊 YouTube Channel Scraper")
-st.caption("Cari dan filter channel YouTube sesuai kriteria buyer")
+st.markdown("""
+<style>
+[data-testid="stSidebar"] {
+    background-color: #0f1117;
+}
+[data-testid="stSidebar"] * {
+    color: #e0e0e0 !important;
+}
+[data-testid="stSidebarNav"] a {
+    color: #e0e0e0 !important;
+}
+[data-testid="stSidebar"] .stTextInput input {
+    background: #1e2130 !important;
+    border-color: #333 !important;
+    color: #fff !important;
+}
+[data-testid="stSidebar"] .stNumberInput input {
+    background: #1e2130 !important;
+    border-color: #333 !important;
+    color: #fff !important;
+}
+[data-testid="stSidebar"] .stTextArea textarea {
+    background: #1e2130 !important;
+    border-color: #333 !important;
+    color: #fff !important;
+}
+[data-testid="stSidebar"] .stSlider {
+    color: #e0e0e0 !important;
+}
+[data-testid="stSidebar"] label {
+    color: #aaa !important;
+    font-size: 0.8rem !important;
+}
+[data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+    color: #fff !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+}
+.block-container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+.page-header {
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 1rem;
+    margin-bottom: 2rem;
+}
+.page-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #0f1117;
+    margin: 0;
+}
+.page-sub {
+    font-size: 0.9rem;
+    color: #888;
+    margin-top: 0.3rem;
+}
+.metric-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    text-align: center;
+}
+.metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0f1117;
+}
+.metric-label {
+    font-size: 0.78rem;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.step-badge {
+    display: inline-block;
+    background: #0f1117;
+    color: #fff;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    text-align: center;
+    line-height: 22px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-right: 0.5rem;
+}
+.step-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #0f1117;
+}
+</style>
+""", unsafe_allow_html=True)
 
-# ── Sidebar Konfigurasi ───────────────────────────────────────────
+# ── Sidebar ────────────────────────────────────────────────────────
 with st.sidebar:
-    st.header("⚙️ Konfigurasi")
-
-    api_key = st.text_input("YouTube API Key", type="password", placeholder="Masukkan API Key lo")
+    st.markdown("## 🔑 API")
+    api_key = st.text_input("YouTube API Key", type="password", placeholder="Paste API key lo")
 
     st.markdown("---")
-    st.subheader("🎯 Filter Kriteria")
-
+    st.markdown("## 🎯 Filter")
     min_subs = st.number_input("Min Subscriber", value=100000, step=10000)
     max_subs = st.number_input("Max Subscriber", value=5000000, step=100000)
     min_videos = st.number_input("Min Jumlah Video", value=30, step=5)
-    max_year = st.number_input("Channel dibuat sebelum tahun", value=2022, step=1)
-    min_inactive = st.number_input("Minimal tidak aktif (bulan)", value=6, step=1)
+    max_year = st.number_input("Dibuat sebelum tahun", value=2022, step=1)
+    min_inactive = st.number_input("Tidak aktif minimal (bulan)", value=6, step=1)
     max_results = st.slider("Max hasil per keyword", 10, 50, 30)
 
     st.markdown("---")
-    st.subheader("🔑 Keywords")
+    st.markdown("## 🔑 Keywords")
     keywords_input = st.text_area(
         "Satu keyword per baris",
         value="resep masakan rumahan\nmasak sehari hari\notomotif modifikasi\nmusik original indonesia\ntips otomotif",
-        height=150
+        height=160,
+        label_visibility="collapsed"
     )
 
-# ── Helper Functions ──────────────────────────────────────────────
+# ── Header ─────────────────────────────────────────────────────────
+st.markdown("""
+<div class="page-header">
+    <p class="page-title">📊 YouTube Channel Scraper</p>
+    <p class="page-sub">Temukan channel YouTube yang sesuai kriteria buyer secara otomatis</p>
+</div>
+""", unsafe_allow_html=True)
 
+# ── Helper Functions ───────────────────────────────────────────────
 def extract_email(text):
     pattern = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
     emails = re.findall(pattern, text)
@@ -55,9 +156,7 @@ def search_channels(youtube, keyword, max_results):
     channel_ids = []
     try:
         response = youtube.search().list(
-            part="snippet",
-            q=keyword,
-            type="channel",
+            part="snippet", q=keyword, type="channel",
             maxResults=min(50, max_results)
         ).execute()
         for item in response.get("items", []):
@@ -72,17 +171,15 @@ def get_channel_details(youtube, channel_ids):
         batch = channel_ids[i:i+50]
         try:
             response = youtube.channels().list(
-                part="snippet,statistics",
-                id=",".join(batch)
+                part="snippet,statistics", id=",".join(batch)
             ).execute()
             for item in response.get("items", []):
                 snippet = item.get("snippet", {})
                 stats = item.get("statistics", {})
                 published_at = snippet.get("publishedAt", "")
                 description = snippet.get("description", "")
-                channel_id = item["id"]
                 results.append({
-                    "channel_id": channel_id,
+                    "channel_id": item["id"],
                     "Nama Channel": snippet.get("title", ""),
                     "Subscriber": int(stats.get("subscriberCount", 0)),
                     "Jumlah Video": int(stats.get("videoCount", 0)),
@@ -91,25 +188,22 @@ def get_channel_details(youtube, channel_ids):
                     "Tanggal Dibuat": published_at[:10] if published_at else "",
                     "Negara": snippet.get("country", "-"),
                     "Email": extract_email(description),
-                    "URL": f"https://www.youtube.com/channel/{channel_id}",
+                    "URL": f"https://www.youtube.com/channel/{item['id']}",
                     "Upload Terakhir": "",
                     "Tidak Aktif (bulan)": 0,
-                    "✅ Lolos Filter": False,
-                    "❌ Alasan Gagal": "",
+                    "Lolos Filter": False,
+                    "Alasan Gagal": "",
                 })
         except Exception as e:
-            st.warning(f"Error ambil detail: {e}")
+            st.warning(f"Error detail: {e}")
         time.sleep(0.3)
     return results
 
 def get_last_upload(youtube, channel_id):
     try:
         response = youtube.search().list(
-            part="snippet",
-            channelId=channel_id,
-            order="date",
-            maxResults=1,
-            type="video"
+            part="snippet", channelId=channel_id,
+            order="date", maxResults=1, type="video"
         ).execute()
         items = response.get("items", [])
         if items:
@@ -118,7 +212,7 @@ def get_last_upload(youtube, channel_id):
         pass
     return None
 
-def apply_filter(ch, min_subs, max_subs, min_videos, max_year, min_inactive):
+def apply_filter(ch):
     reasons = []
     if ch["Subscriber"] < min_subs:
         reasons.append(f"subscriber {ch['Subscriber']:,} < {min_subs:,}")
@@ -127,63 +221,57 @@ def apply_filter(ch, min_subs, max_subs, min_videos, max_year, min_inactive):
     if ch["Jumlah Video"] < min_videos:
         reasons.append(f"video {ch['Jumlah Video']} < {min_videos}")
     if ch["Tahun Dibuat"] >= max_year:
-        reasons.append(f"dibuat tahun {ch['Tahun Dibuat']} (terlalu baru)")
+        reasons.append(f"dibuat tahun {ch['Tahun Dibuat']}")
     if ch["Tidak Aktif (bulan)"] < min_inactive:
-        reasons.append(f"masih aktif ({ch['Tidak Aktif (bulan)']} bulan lalu)")
+        reasons.append(f"masih aktif ({ch['Tidak Aktif (bulan)']} bln)")
     if reasons:
-        ch["❌ Alasan Gagal"] = " | ".join(reasons)
-        ch["✅ Lolos Filter"] = False
+        ch["Alasan Gagal"] = " | ".join(reasons)
+        ch["Lolos Filter"] = False
     else:
-        ch["✅ Lolos Filter"] = True
+        ch["Lolos Filter"] = True
     return ch
 
-# ── Main UI ───────────────────────────────────────────────────────
-
-st.markdown("---")
-
+# ── Main ───────────────────────────────────────────────────────────
 if not api_key:
-    st.warning("⚠️ Masukkan YouTube API Key di sidebar kiri dulu.")
+    st.info("👈 Masukkan YouTube API Key di sidebar kiri untuk mulai.")
     st.stop()
 
 keywords = [k.strip() for k in keywords_input.strip().split("\n") if k.strip()]
 
 if st.button("🚀 Mulai Scraping", type="primary", use_container_width=True):
-
     if not keywords:
         st.error("Tambahkan minimal 1 keyword dulu.")
         st.stop()
 
     youtube = build("youtube", "v3", developerKey=api_key)
-
     all_ids = []
-    st.markdown("### 🔍 Tahap 1 — Search Channel")
-    progress_search = st.progress(0)
-    status_search = st.empty()
 
+    # Step 1
+    st.markdown('<p><span class="step-badge">1</span><span class="step-label">Search Channel</span></p>', unsafe_allow_html=True)
+    prog1 = st.progress(0)
+    stat1 = st.empty()
     for i, kw in enumerate(keywords):
-        status_search.text(f"Nyari keyword: '{kw}'...")
+        stat1.caption(f"Mencari: *{kw}*")
         ids = search_channels(youtube, kw, max_results)
         all_ids.extend(ids)
-        progress_search.progress((i + 1) / len(keywords))
+        prog1.progress((i + 1) / len(keywords))
         time.sleep(0.5)
-
     all_ids = list(set(all_ids))
-    status_search.text(f"✅ Total channel unik ditemukan: {len(all_ids)}")
+    stat1.caption(f"✅ {len(all_ids)} channel unik ditemukan")
 
-    st.markdown("### 📋 Tahap 2 — Ambil Detail Channel")
-    progress_detail = st.progress(0)
-    status_detail = st.empty()
-    status_detail.text("Mengambil detail channel...")
-
+    # Step 2
+    st.markdown('<p><span class="step-badge">2</span><span class="step-label">Ambil Detail Channel</span></p>', unsafe_allow_html=True)
+    prog2 = st.progress(0)
+    stat2 = st.empty()
+    stat2.caption("Mengambil data detail...")
     channels = get_channel_details(youtube, all_ids)
-    progress_detail.progress(1.0)
-    status_detail.text(f"✅ Detail berhasil diambil: {len(channels)} channel")
+    prog2.progress(1.0)
+    stat2.caption(f"✅ {len(channels)} channel berhasil diambil")
 
-    st.markdown("### 📅 Tahap 3 — Cek Upload Terakhir")
-    progress_upload = st.progress(0)
-    status_upload = st.empty()
-
-    # Live table placeholder
+    # Step 3
+    st.markdown('<p><span class="step-badge">3</span><span class="step-label">Cek Upload Terakhir & Filter</span></p>', unsafe_allow_html=True)
+    prog3 = st.progress(0)
+    stat3 = st.empty()
     live_table = st.empty()
     partial_data = []
 
@@ -191,64 +279,64 @@ if st.button("🚀 Mulai Scraping", type="primary", use_container_width=True):
         last = get_last_upload(youtube, ch["channel_id"])
         ch["Upload Terakhir"] = last or "-"
         ch["Tidak Aktif (bulan)"] = months_since(last)
-        ch = apply_filter(ch, min_subs, max_subs, min_videos, max_year, min_inactive)
+        ch = apply_filter(ch)
         partial_data.append(ch)
+        prog3.progress((i + 1) / len(channels))
+        stat3.caption(f"Memproses {i+1}/{len(channels)}: *{ch['Nama Channel']}*")
 
-        progress_upload.progress((i + 1) / len(channels))
-        status_upload.text(f"Progress: {i+1}/{len(channels)} — {ch['Nama Channel']}")
-
-        # Update live table setiap 5 channel
         if (i + 1) % 5 == 0 or (i + 1) == len(channels):
-            df_partial = pd.DataFrame(partial_data)
-            df_partial = df_partial.drop(columns=["channel_id"], errors="ignore")
-            df_partial = df_partial.sort_values("✅ Lolos Filter", ascending=False)
-            live_table.dataframe(df_partial, use_container_width=True, height=400)
+            df_live = pd.DataFrame(partial_data).drop(columns=["channel_id"], errors="ignore")
+            df_live = df_live.sort_values("Lolos Filter", ascending=False)
+            live_table.dataframe(df_live, use_container_width=True, height=300)
 
         time.sleep(0.3)
 
-    status_upload.text(f"✅ Selesai!")
+    stat3.caption("✅ Selesai!")
 
-    # ── Final Results ─────────────────────────────────────────────
+    # Results
     st.markdown("---")
-    st.markdown("### 🎯 Hasil Akhir")
-
     df_final = pd.DataFrame(partial_data).drop(columns=["channel_id"], errors="ignore")
-    df_final = df_final.sort_values("✅ Lolos Filter", ascending=False)
+    df_final = df_final.sort_values("Lolos Filter", ascending=False)
+    lolos = df_final[df_final["Lolos Filter"] == True]
+    gagal = df_final[df_final["Lolos Filter"] == False]
 
-    lolos = df_final[df_final["✅ Lolos Filter"] == True]
-    gagal = df_final[df_final["✅ Lolos Filter"] == False]
+    # Metric cards
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown(f'<div class="metric-card"><div class="metric-value">{len(df_final)}</div><div class="metric-label">Total Channel</div></div>', unsafe_allow_html=True)
+    with c2:
+        st.markdown(f'<div class="metric-card"><div class="metric-value" style="color:#1a7a4a;">{len(lolos)}</div><div class="metric-label">✅ Lolos Filter</div></div>', unsafe_allow_html=True)
+    with c3:
+        st.markdown(f'<div class="metric-card"><div class="metric-value" style="color:#c0392b;">{len(gagal)}</div><div class="metric-label">❌ Tidak Lolos</div></div>', unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Total Channel", len(df_final))
-    col2.metric("✅ Lolos Filter", len(lolos))
-    col3.metric("❌ Tidak Lolos", len(gagal))
+    st.markdown("&nbsp;", unsafe_allow_html=True)
 
-    st.markdown("#### ✅ Channel yang Lolos")
-    if len(lolos) > 0:
-        st.dataframe(lolos, use_container_width=True, height=400)
-    else:
-        st.info("Belum ada yang lolos filter. Coba kurangi kriteria di sidebar.")
+    tab1, tab2 = st.tabs([f"✅ Lolos Filter ({len(lolos)})", f"📋 Semua Channel ({len(df_final)})"])
 
-    with st.expander("📋 Lihat semua channel (termasuk yang tidak lolos)"):
-        st.dataframe(df_final, use_container_width=True, height=400)
+    with tab1:
+        if len(lolos) > 0:
+            st.dataframe(lolos, use_container_width=True, height=450)
+        else:
+            st.info("Belum ada yang lolos. Coba kurangi kriteria filter di sidebar.")
 
-    # ── Download CSV ──────────────────────────────────────────────
+    with tab2:
+        st.dataframe(df_final, use_container_width=True, height=450)
+
+    # Download
     st.markdown("---")
-    csv = df_final.to_csv(index=False).encode("utf-8-sig")
-    st.download_button(
-        label="⬇️ Download Semua Hasil (CSV)",
-        data=csv,
-        file_name=f"hasil_scraping_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
-        mime="text/csv",
-        use_container_width=True
-    )
-
-    csv_lolos = lolos.to_csv(index=False).encode("utf-8-sig") if len(lolos) > 0 else b""
-    if csv_lolos:
+    col_dl1, col_dl2 = st.columns(2)
+    with col_dl1:
         st.download_button(
-            label="⬇️ Download yang Lolos Filter Saja (CSV)",
-            data=csv_lolos,
-            file_name=f"hasil_lolos_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
-            mime="text/csv",
-            use_container_width=True
+            "⬇️ Download Semua (CSV)",
+            df_final.to_csv(index=False).encode("utf-8-sig"),
+            f"semua_channel_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
+            "text/csv", use_container_width=True
         )
+    with col_dl2:
+        if len(lolos) > 0:
+            st.download_button(
+                "⬇️ Download Lolos Filter (CSV)",
+                lolos.to_csv(index=False).encode("utf-8-sig"),
+                f"lolos_filter_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
+                "text/csv", use_container_width=True
+            )
