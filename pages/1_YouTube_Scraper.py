@@ -209,8 +209,23 @@ st.markdown('<p class="page-title">YouTube Channel Scraper</p>', unsafe_allow_ht
 st.markdown('<p class="page-sub">Temukan channel YouTube yang sesuai kriteria buyer secara otomatis</p>', unsafe_allow_html=True)
 
 # ── Config Form ────────────────────────────────────────────────────
+# ── Daftar API Key — tambah/edit nama dan key di sini ─────────────
+API_KEYS = {
+    "API Key 1": "AIzaSyB9nUe2ThxR26Y8_RSA3y5JFaJx2hPSrQ8",
+    "API Key 2": "AIzaSyBo6lZZ-CjO3O_Qv57ucqKltP8AOQOSErw",
+    "KOSONG": "MASUKKAN_API_KEY_3_DISINI",
+}
+# ──────────────────────────────────────────────────────────────────
+
 with st.expander("Pengaturan & Filter", expanded=True):
-    api_key = st.text_input("YouTube API Key", type="password", placeholder="Paste API key lo di sini")
+    selected_label = st.selectbox("Pilih API Key", list(API_KEYS.keys()))
+    api_key = API_KEYS[selected_label]
+
+    st.markdown(
+        f"<p style='font-size:0.78rem;color:#aaa;margin:0.25rem 0 0;'>"
+        f"Key aktif: <code>{api_key[:8]}...{api_key[-4:] if len(api_key) > 12 else ''}</code></p>",
+        unsafe_allow_html=True
+    )
 
     st.markdown('<hr style="border:none;border-top:1px solid #ebebeb;margin:1rem 0">', unsafe_allow_html=True)
 
