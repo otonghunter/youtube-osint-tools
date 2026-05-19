@@ -59,6 +59,19 @@ label, .stTextInput label, .stNumberInput label, .stTextArea label {
     text-transform: uppercase !important;
 }
 
+/* Fixed bottom button */
+.stButton {
+    position: fixed !important;
+    bottom: 1.25rem !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: min(720px, 90vw) !important;
+    z-index: 999 !important;
+    background: #fff !important;
+    padding: 0.5rem 0 !important;
+    border-top: 1px solid #ebebeb !important;
+}
+
 /* Button */
 .stButton > button {
     background: #111 !important;
@@ -154,6 +167,24 @@ label, .stTextInput label, .stNumberInput label, .stTextArea label {
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: #aaa;
+}
+
+/* Fixed bottom bar */
+.fixed-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-top: 1px solid #ebebeb;
+    padding: 1rem 2rem;
+    z-index: 999;
+    display: flex;
+    justify-content: center;
+}
+.fixed-bar-inner {
+    width: 100%;
+    max-width: 720px;
 }
 
 /* Download buttons */
@@ -295,19 +326,20 @@ def apply_filter(ch):
         ch["Lolos Filter"] = True
     return ch
 
-# ── Run Button ─────────────────────────────────────────────────────
-st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
-
-if not api_key:
-    st.info("Masukkan YouTube API Key di pengaturan di atas untuk mulai.")
-    st.stop()
+# ── Fixed Bottom Button ────────────────────────────────────────────
+st.markdown("<div style='height:5rem'></div>", unsafe_allow_html=True)
 
 keywords = [k.strip() for k in keywords_input.strip().split("\n") if k.strip()]
 
-if st.button("Mulai Scraping"):
-    if not keywords:
-        st.error("Tambahkan minimal 1 keyword dulu.")
-        st.stop()
+run = st.button("Mulai Scraping", use_container_width=True)
+
+if run and not api_key:
+    st.warning("Masukkan YouTube API Key di pengaturan di atas untuk mulai.")
+
+if run and not keywords:
+    st.error("Tambahkan minimal 1 keyword dulu.")
+
+if run and api_key and keywords:
 
     youtube = build("youtube", "v3", developerKey=api_key)
     all_ids = []
