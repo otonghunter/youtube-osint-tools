@@ -166,7 +166,7 @@ label, .stTextInput label, .stNumberInput label, .stTextArea label {
 API_KEYS = {
     "API Key 1": "AIzaSyB9nUe2ThxR26Y8_RSA3y5JFaJx2hPSrQ8",
     "API Key 2": "AIzaSyBo6lZZ-CjO3O_Qv57ucqKltP8AOQOSErw"
-    "API Key 3": "MASUKKAN_API_KEY_3_DISINI",
+    "KOSONG": "MASUKKAN_API_KEY_3_DISINI",
 }
 
 # ── Google Sheets Helper ───────────────────────────────────────────
@@ -225,9 +225,10 @@ st.markdown('<p class="page-sub">Temukan channel YouTube yang sesuai kriteria bu
 with st.expander("Pengaturan & Filter", expanded=True):
     selected_label = st.selectbox("Pilih API Key", list(API_KEYS.keys()))
     api_key = API_KEYS[selected_label]
+    key_preview = api_key[:8] + "..." + (api_key[-4:] if len(api_key) > 12 else "")
     st.markdown(
         f"<p style='font-size:0.78rem;color:#aaa;margin:0.25rem 0 0;'>"
-        f"Key aktif: <code>{api_key[:8]}...{api_key[-4:] if len(api_key) > 12 else ''}</code></p>",
+        f"Key aktif: <code>{key_preview}</code></p>",
         unsafe_allow_html=True
     )
 
@@ -258,9 +259,10 @@ with st.expander("Pengaturan & Filter", expanded=True):
     if use_sheets:
         try:
             spreadsheet_id = st.secrets["sheets"]["spreadsheet_id"]
+            sheet_preview = spreadsheet_id[:20]
             st.markdown(
                 f"<p style='font-size:0.78rem;color:#1a7a4a;margin:0.25rem 0 0;'>"
-                f"Spreadsheet ID: <code>{spreadsheet_id[:20]}...</code></p>",
+                f"Spreadsheet ID: <code>{sheet_preview}...</code></p>",
                 unsafe_allow_html=True
             )
         except:
