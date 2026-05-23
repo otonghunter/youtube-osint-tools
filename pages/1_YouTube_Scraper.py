@@ -166,7 +166,7 @@ label, .stTextInput label, .stNumberInput label, .stTextArea label {
 API_KEYS = {
     "API Key 1": "AIzaSyB9nUe2ThxR26Y8_RSA3y5JFaJx2hPSrQ8",
     "API Key 2": "AIzaSyBo6lZZ-CjO3O_Qv57ucqKltP8AOQOSErw"
-    "KOSONG": "MASUKKAN_API_KEY_3_DISINI",
+    "KOSONG": "",
 }
 
 # ── Google Sheets Helper ───────────────────────────────────────────
