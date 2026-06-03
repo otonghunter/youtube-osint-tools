@@ -45,9 +45,8 @@ label { font-size: 0.8rem !important; font-weight: 600 !important; color: #555 !
 st.markdown(CSS, unsafe_allow_html=True)
 
 API_KEYS = {
-    "API Key 1": "MASUKKAN_API_KEY_1_DISINI",
-    "API Key 2": "MASUKKAN_API_KEY_2_DISINI",
-    "API Key 3": "MASUKKAN_API_KEY_3_DISINI",
+    "API Key 1": "AIzaSyB9nUe2ThxR26Y8_RSA3y5JFaJx2hPSrQ8",
+    "API Key 2": "AIzaSyBo6lZZ-CjO3O_Qv57ucqKltP8AOQOSErw",
 }
 
 def get_sheets_client():
